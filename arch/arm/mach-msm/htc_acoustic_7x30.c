@@ -34,6 +34,7 @@
 #include <mach/htc_acoustic_7x30.h>
 #include "board-vision.h"
 
+
 #define ACOUSTIC_IOCTL_MAGIC 'p'
 #define ACOUSTIC_ADIE_SIZE	_IOW(ACOUSTIC_IOCTL_MAGIC, 15, size_t)
 #define SHARE_MEMORY_SIZE	_IOR(ACOUSTIC_IOCTL_MAGIC, 16, size_t)
@@ -47,6 +48,7 @@
 #define ACOUSTIC_MIC_DISABLE	_IOW(ACOUSTIC_IOCTL_MAGIC, 29, int)
 #define ACOUSTIC_REINIT_ACDB    _IOW(ACOUSTIC_IOCTL_MAGIC, 30, unsigned)
 #define ACOUSTIC_GET_BACK_MIC_STATE	_IOW(ACOUSTIC_IOCTL_MAGIC, 31, int)
+#define ACOUSTIC_MUTE_HEADSET 	_IOW(ACOUSTIC_IOCTL_MAGIC, 32, int)
 
 #define D(fmt, args...) printk(KERN_INFO "htc-acoustic: "fmt, ##args)
 #define E(fmt, args...) printk(KERN_ERR "htc-acoustic: "fmt, ##args)
@@ -352,6 +354,17 @@ acoustic_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			E("acoustic_ioctl: ACOUSTIC_GET_BACK_MIC_STATE failed\n");
 			rc = -EFAULT;
 		}
+		break;
+	}
+	case ACOUSTIC_MUTE_HEADSET: {
+		int en;
+		if (copy_from_user(&en, (void *)arg,
+			sizeof(int))) {
+			rc = -EFAULT;
+			break;
+		}
+		if (the_ops->mute_headset_amp)
+			the_ops->mute_headset_amp(en);
 		break;
 	}
 	default:
