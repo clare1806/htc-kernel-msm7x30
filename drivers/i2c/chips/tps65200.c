@@ -22,7 +22,7 @@
 #include <asm/mach-types.h>
 
 static const unsigned short normal_i2c[] = { I2C_CLIENT_END };
-static int tps65200_initial = -1;
+
 /**
  * Insmod parameters
  */
@@ -178,9 +178,6 @@ int tps_set_charger_ctrl(u32 ctl)
 	u8 status;
 	u8 regh;
 
-	if (tps65200_initial < 0)
-		return 0;
-
 	switch (ctl) {
 	case DISABLE:
 		pr_info("Switch charger OFF\n");
@@ -308,7 +305,6 @@ static int tps65200_probe(struct i2c_client *client,
 	data->address = client->addr;
 	data->client = client;
 	mutex_init(&data->xfer_lock);
-	tps65200_initial = 1;
 	pr_info("[TPS65200]: Driver registration done\n");
 	return 0;
 }

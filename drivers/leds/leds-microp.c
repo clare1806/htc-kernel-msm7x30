@@ -125,7 +125,7 @@ static void microp_led_jogball_brightness_set(struct led_classdev *led_cdev,
 	case 7:
 		data[0] = 2;
 		data[1] = 0;
-		data[2] = 60;
+		data[2] = 30;
 		break;
 	default:
 		pr_warning("%s: unknown value: %d\n", __func__, brightness);
@@ -473,7 +473,7 @@ static ssize_t microp_mobeam_send_store(struct device *dev,
 				   const char *buf, size_t count)
 {
 	uint8_t data[2];
-	unsigned char num;
+	char num;
 	int ret;
 
 pr_info("%s\n", __func__);
