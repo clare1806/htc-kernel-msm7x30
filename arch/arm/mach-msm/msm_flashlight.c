@@ -84,7 +84,10 @@ static void flashlight_hw_command(uint8_t addr, uint8_t data)
 
 static void flashlight_turn_off(void)
 {
-	gpio_direction_output(this_fl_str->gpio_flash, 0);
+	if (this_fl_str->mode_status == FL_MODE_OFF)
+		return;
+	if (gpio_get_value(this_fl_str->gpio_flash))
+		gpio_direction_output(this_fl_str->gpio_flash, 0);
 	gpio_direction_output(this_fl_str->gpio_torch, 0);
 	this_fl_str->mode_status = FL_MODE_OFF;
 	this_fl_str->fl_lcdev.brightness = LED_OFF;
@@ -113,7 +116,7 @@ int aat1271_flashlight_control(int mode)
 		return -EIO;
 	}
 #endif
-#if 0 /* disable this for DEATH_RAY */
+#ifndef CONFIG_MSM_FLASHLIGHT_DEATH_RAY
 	if (this_fl_str->mode_status == mode) {
 		printk(KERN_INFO "%s: mode is same: %d\n",
 							FLASHLIGHT_NAME, mode);
@@ -128,7 +131,6 @@ int aat1271_flashlight_control(int mode)
 			return -EINVAL;
 	}
 #endif
-
 	spin_lock_irqsave(&this_fl_str->spin_lock,
 						this_fl_str->spinlock_flags);
 	if (this_fl_str->mode_status == FL_MODE_FLASH) {
@@ -141,7 +143,10 @@ int aat1271_flashlight_control(int mode)
 		flashlight_turn_off();
 	break;
 	case FL_MODE_TORCH:
-		flashlight_hw_command(3, 3);
+		if (this_fl_str->led_count)
+			flashlight_hw_command(3, 4);
+		else
+			flashlight_hw_command(3, 3);
 		flashlight_hw_command(0, 6);
 		flashlight_hw_command(2, 4);
 		this_fl_str->mode_status = FL_MODE_TORCH;
@@ -173,27 +178,34 @@ int aat1271_flashlight_control(int mode)
 		wake_lock(&this_fl_str->wake_lock);
 	break;
 	case FL_MODE_PRE_FLASH:
-		flashlight_hw_command(3, 1);
-		flashlight_hw_command(0, 9);
+		flashlight_hw_command(3, 3);
+		flashlight_hw_command(0, 6);
 		flashlight_hw_command(2, 4);
 		this_fl_str->mode_status = FL_MODE_PRE_FLASH;
 		this_fl_str->fl_lcdev.brightness = LED_HALF + 1;
 	break;
 	case FL_MODE_TORCH_LEVEL_1:
-		flashlight_hw_command(3, 3);
+		if (this_fl_str->led_count)
+			flashlight_hw_command(3, 4);
+		else
+			flashlight_hw_command(3, 3);
 		flashlight_hw_command(0, 15);
 		flashlight_hw_command(2, 4);
 		this_fl_str->mode_status = FL_MODE_TORCH_LEVEL_1;
 		this_fl_str->fl_lcdev.brightness = LED_HALF - 2;
 	break;
 	case FL_MODE_TORCH_LEVEL_2:
-		flashlight_hw_command(3, 3);
+		if (this_fl_str->led_count)
+			flashlight_hw_command(3, 4);
+		else
+			flashlight_hw_command(3, 3);
 		flashlight_hw_command(0, 10);
 		flashlight_hw_command(2, 4);
 		this_fl_str->mode_status = FL_MODE_TORCH_LEVEL_2;
 		this_fl_str->fl_lcdev.brightness = LED_HALF - 1;
 	break;
 
+#ifdef CONFIG_MSM_FLASHLIGHT_DEATH_RAY
 	case FL_MODE_DEATH_RAY:
 		pr_info("%s: death ray\n", __func__);
 		hrtimer_cancel(&this_fl_str->timer);
@@ -202,7 +214,8 @@ int aat1271_flashlight_control(int mode)
 		gpio_direction_output(this_fl_str->gpio_flash, 1);
 		this_fl_str->mode_status = 0;
 		this_fl_str->fl_lcdev.brightness = 3;
-	break;
+		break;
+#endif
 
 	default:
 		printk(KERN_ERR "%s: unknown flash_light flags: %d\n",
@@ -236,8 +249,10 @@ static void fl_lcdev_brightness_set(struct led_classdev *led_cdev,
 			mode = FL_MODE_TORCH_LED_A;
 		else if (brightness == 2 && fl_str->led_count)
 			mode = FL_MODE_TORCH_LED_B;
+#ifdef CONFIG_MSM_FLASHLIGHT_DEATH_RAY
 		else if (brightness == 3)
 			mode = FL_MODE_DEATH_RAY;
+#endif
 		else
 			mode = FL_MODE_TORCH;
 	} else if (brightness > LED_HALF && brightness <= LED_FULL) {
@@ -445,6 +460,7 @@ static int flashlight_probe(struct platform_device *pdev)
 	hrtimer_init(&fl_str->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	fl_str->timer.function = flashlight_hrtimer_func;
 	fl_str->led_count = flashlight->led_count;
+	pr_info("%s: led_count = %d\n", __func__, fl_str->led_count);
 
 	this_fl_str = fl_str;
 	printk(KERN_INFO "%s: The Flashlight Driver is ready\n", __func__);

@@ -37,6 +37,7 @@
 #include <linux/sched.h>
 #include <media/msm_camera-7x30.h>
 #include <mach/camera.h>
+#include <mach/msm_flashlight.h>
 DEFINE_MUTEX(hlist_mut);
 #include <asm/cacheflush.h>
 #include <linux/rtc.h>
@@ -1837,11 +1838,11 @@ int msm_camera_flash(struct msm_sync *sync, int level)
 
 	switch (level) {
 	case MSM_CAMERA_LED_HIGH:
-		flash_level = sync->sdata->flash_cfg->num_flash_levels - 1;
+		flash_level = FL_MODE_FLASH;
 		sync->sdata->led_high_enabled = 0; /* reset led high*/
 		break;
 	case MSM_CAMERA_LED_LOW:
-		flash_level = sync->sdata->flash_cfg->num_flash_levels / 2;
+		flash_level = FL_MODE_PRE_FLASH;
 		sync->sdata->led_high_enabled = 1; /* set led high*/
 		break;
 	case MSM_CAMERA_LED_OFF:
