@@ -37,24 +37,18 @@ static struct gpio_event_direct_entry glacier_keypad_input_map[] = {
 	{
 		.gpio = GLACIER_GPIO_KEYPAD_POWER_KEY,
 		.code = KEY_POWER,
-		.wakeup = 1,
 	},
 	{
 		.gpio = PM8058_GPIO_PM_TO_SYS(GLACIER_VOL_UP),
 		.code = KEY_VOLUMEUP,
-		.wakeup = 1,
-		.check_call_status = 1,
 	},
 	{
 		.gpio = PM8058_GPIO_PM_TO_SYS(GLACIER_VOL_DN),
 		.code = KEY_VOLUMEDOWN,
-		.wakeup = 1,
-		.check_call_status = 1,
 	},
 	{
 		.gpio = PM8058_GPIO_PM_TO_SYS(GLACIER_OJ_ACTION),
 		.code = BTN_MOUSE,
-		.wakeup = 1,
 	},
 	{
 		.gpio = PM8058_GPIO_PM_TO_SYS(GLACIER_HOME_KEY),
@@ -75,7 +69,6 @@ static struct gpio_event_direct_entry glacier_keypad_input_map[] = {
 	{
 		.gpio = PM8058_GPIO_PM_TO_SYS(GLACIER_CAM_STEP2),
 		.code = KEY_CAMERA,
-		.wakeup = 1,
 	},
 	{
 		.gpio = PM8058_GPIO_PM_TO_SYS(GLACIER_CAM_STEP1),
@@ -108,13 +101,6 @@ static struct gpio_event_info *glacier_keypad_info[] = {
 	&glacier_keypad_input_info.info,
 };
 
-static int glacier_pmic8058_keypad_power(
-			const struct gpio_event_platform_data *pdata, bool on)
-{
-	/* if we need it... */
-	return 0;
-}
-
 static struct gpio_event_platform_data glacier_keypad_data = {
 	.names = {
 		"glacier-keypad",
@@ -122,7 +108,6 @@ static struct gpio_event_platform_data glacier_keypad_data = {
 	},
 	.info = glacier_keypad_info,
 	.info_count = ARRAY_SIZE(glacier_keypad_info),
-	.power = glacier_pmic8058_keypad_power,
 };
 
 static struct platform_device glacier_keypad_input_device = {
