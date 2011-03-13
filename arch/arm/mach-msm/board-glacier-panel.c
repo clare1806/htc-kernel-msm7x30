@@ -542,12 +542,12 @@ glacier_mddi_init(struct msm_mddi_bridge_platform_data *bridge_data,
 		if (reg == REG_WAIT)
 			msleep(val);
 		else {
-			client_data->auto_hibernate(client_data, 0);
 			client_data->remote_write(client_data, val, reg);
+			if (reg == 0x1100)
+				client_data->send_powerdown(client_data);
 		}
 	}
 
-	client_data->auto_hibernate(client_data, 1);
 	return 0;
 }
 
