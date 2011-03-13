@@ -272,6 +272,7 @@ static struct acoustic_ops acoustic = {
 	.support_audience = glacier_support_audience,
 	.support_back_mic = glacier_support_back_mic,
 	.mic_disable = glacier_mic_disable,
+	.mute_headset_amp = glacier_snddev_hsed_pamp_on,
 };
 
 void __init glacier_audio_init(void)
