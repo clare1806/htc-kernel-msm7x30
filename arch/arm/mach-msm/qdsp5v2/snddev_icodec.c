@@ -292,14 +292,12 @@ static int snddev_icodec_open_rx(struct snddev_icodec_state *icodec)
 
 	/* enable MI2S RX master block */
 	/* enable MI2S RX bit clock */
-	if (!support_aic3254) {
-		trc = clk_set_rate(drv->rx_mclk,
+	trc = clk_set_rate(drv->rx_mclk,
 			SNDDEV_ICODEC_CLK_RATE(icodec->sample_rate));
-		if (IS_ERR_VALUE(trc))
-			goto error_invalid_freq;
+	if (IS_ERR_VALUE(trc))
+		goto error_invalid_freq;
 
-		clk_enable(drv->rx_mclk);
-	}
+	clk_enable(drv->rx_mclk);
 	clk_enable(drv->rx_sclk);
 	/* clk_set_rate(drv->lpa_codec_clk, 1); */ /* Remove if use pcom */
 	clk_enable(drv->lpa_p_clk);
@@ -345,17 +343,10 @@ static int snddev_icodec_open_rx(struct snddev_icodec_state *icodec)
 	lpa_cmd_enable_codec(drv->lpa, 1);
 	if (!support_aic3254) {
 		/* Enable ADIE */
-		if (adie_codec_proceed_stage(icodec->adie_path,
-					ADIE_CODEC_DIGITAL_READY) ) {
-			icodec->adie_path->profile = NULL;
-			goto error_adie;
-		}
-
-		if (adie_codec_proceed_stage(icodec->adie_path,
-					ADIE_CODEC_DIGITAL_ANALOG_READY) ) {
-			icodec->adie_path->profile = NULL;
-			goto error_adie;
-		}
+		adie_codec_proceed_stage(icodec->adie_path,
+					ADIE_CODEC_DIGITAL_READY);
+		adie_codec_proceed_stage(icodec->adie_path,
+					ADIE_CODEC_DIGITAL_ANALOG_READY);
 	}
 
 	/* Enable power amplifier */
@@ -418,16 +409,9 @@ static int snddev_icodec_open_tx(struct snddev_icodec_state *icodec)
 		goto error_adie;
 	/* Enable ADIE */
 	adie_codec_setpath(icodec->adie_path, icodec->sample_rate, 256);
-	if (adie_codec_proceed_stage(icodec->adie_path,
-			ADIE_CODEC_DIGITAL_READY)) {
-		icodec->adie_path->profile = NULL;
-		goto error_adie;
-	}
-	if (adie_codec_proceed_stage(icodec->adie_path,
-			ADIE_CODEC_DIGITAL_ANALOG_READY) ) {
-		icodec->adie_path->profile = NULL;
-		goto error_adie;
-	}
+	adie_codec_proceed_stage(icodec->adie_path, ADIE_CODEC_DIGITAL_READY);
+	adie_codec_proceed_stage(icodec->adie_path,
+	ADIE_CODEC_DIGITAL_ANALOG_READY);
 
 	/* Start AFE */
 	afe_config.sample_rate = icodec->sample_rate / 1000;
@@ -492,8 +476,7 @@ static int snddev_icodec_close_rx(struct snddev_icodec_state *icodec)
 	/* Disable MI2S RX master block */
 	/* Disable MI2S RX bit clock */
 	clk_disable(drv->rx_sclk);
-	if (!support_aic3254)
-		clk_disable(drv->rx_mclk);
+	clk_disable(drv->rx_mclk);
 	icodec->enabled = 0;
 
 	wake_unlock(&drv->rx_idlelock);
@@ -600,12 +583,8 @@ static int snddev_icodec_open(struct msm_snddev_info *dev_info)
 			if ((icodec->data->dev_vol_type & (
 				SNDDEV_DEV_VOL_DIGITAL |
 				SNDDEV_DEV_VOL_ANALOG)))
-				snddev_icodec_set_device_volume_impl(
+				rc = snddev_icodec_set_device_volume_impl(
 						dev_info, dev_info->dev_volume);
-		} else {
-			pr_info("snddev_icodec_open failed. %s\n", dev_info->name);
-			mutex_unlock(&drv->rx_lock);
-			return rc;
 		}
 		mutex_unlock(&drv->rx_lock);
 	} else {
@@ -622,12 +601,8 @@ static int snddev_icodec_open(struct msm_snddev_info *dev_info)
 			if ((icodec->data->dev_vol_type & (
 				SNDDEV_DEV_VOL_DIGITAL |
 				SNDDEV_DEV_VOL_ANALOG)))
-				snddev_icodec_set_device_volume_impl(
+				rc = snddev_icodec_set_device_volume_impl(
 						dev_info, dev_info->dev_volume);
-		} else {
-			pr_info("snddev_icodec_open failed. %s\n", dev_info->name);
-			mutex_unlock(&drv->tx_lock);
-			return rc;
 		}
 		mutex_unlock(&drv->tx_lock);
 	}
